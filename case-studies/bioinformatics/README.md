@@ -1,0 +1,1 @@
+java -jar .\fsm4j.jar .\bioinformatics\bio.fsm4j -o .\bioinformatics\src\main\java\com\fsm4j\analyzer\
