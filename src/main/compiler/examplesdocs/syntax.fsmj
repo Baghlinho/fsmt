@@ -1,0 +1,20 @@
+$package com.sample
+$class Syntax
+$initial-state State1
+$actions action1 action2
+
+${{
+    State1 {
+        __enter__ {#
+            System.out.println("entered State 1");
+        #}
+        __exit__ {#
+            System.out.println("exited State 1");
+        #}        
+        equalTo5 => null {##},
+        equalTo5(x:int) [#x == 5#] => State2 {#
+            ctx.action1();
+        #}  
+    },
+    State2 {}
+}}$

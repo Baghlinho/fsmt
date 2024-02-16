@@ -1,0 +1,56 @@
+$package com.example2
+
+$class SequenceDetector
+
+$initial-state S0
+
+$actions 
+    match 
+    mismatch
+
+${{
+    S0 {        
+        readBit(b:int) [#b == 0#] => null {#
+            ctx.mismatch();
+        #},
+        readBit(b:int) [#b == 1#] => S1 {#
+            ctx.mismatch();
+        #}
+    },
+
+    S1 {
+        __enter__ {#
+            System.out.print("_"); 
+        #}
+        __exit__ {#
+            System.out.println();
+            System.out.print("State 1 bit: ");
+        #}
+        readBit(b:int) [#b == 0#] => S2 {#
+            ctx.mismatch();
+            System.out.println();
+        #},
+        readBit(b:int) [#b == 1#] => S1 {#
+            ctx.mismatch();
+            System.out.println();
+        #}
+    },
+    
+    S2 {
+        readBit(b:int) [#b == 0#] => S0 {#
+            ctx.mismatch();
+        #},
+        readBit(b:int) [#b == 1#] => S3 {#
+            ctx.mismatch();
+        #}
+    },
+    
+    S3 {
+        readBit(b:int) [#b == 0#] => S0 {#
+            ctx.match();
+        #},
+        readBit(b:int) [#b == 1#] => S1 {#
+            ctx.mismatch();
+        #}
+    }
+}}$

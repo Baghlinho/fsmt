@@ -1,0 +1,46 @@
+{
+    "options": {
+      "package": ["com.sample"],
+      "class": ["Syntax"],
+      "initial-state": ["State1"],
+      "actions": ["action1", "action2"]
+    },
+    "states": [
+      {
+        "name": "State1",
+        "enterCode": "System.out.println(\"entered State 1\");",
+        "exitCode": "System.out.println(\"exited State 1\");",
+        "transitions": [
+          {
+            "trigger": {
+              "name": "equalTo5",
+              "params": [
+                {
+                  "name": "x",
+                  "type": "int"
+                }
+              ]
+            },
+            "guard": "x == 5",
+            "nextState": "State2",
+            "code": "ctx.action1();"
+          },
+          {
+            "trigger": {
+              "name": "equalTo5",
+              "params": []
+            },
+            "nextState": "null",
+            "code": ""
+          }
+        ]
+      },
+      {
+        "name": "State2",
+        "enterCode": "",
+        "exitCode": "",
+        "transitions": []
+      }
+    ]
+  }
+  
