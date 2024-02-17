@@ -32,7 +32,7 @@ public class TAGState extends Base {
 				ctx.found();
 
 			} finally {
-			    context.setState(new TAGState(context));
+			    context.setState(new Start(context));
 			    context.getState().__enter__();
 			}
 

@@ -20,7 +20,7 @@ ${{
     },
 
     TAGState {
-        match(nucleotide: char) [# nucleotide == 'C' #] => TAGState {# ctx.found(); #},
+        match(nucleotide: char) [# nucleotide == 'C' #] => Start {# ctx.found(); #},
         match(nucleotide: char) => Start {##}
     }
 }}$
