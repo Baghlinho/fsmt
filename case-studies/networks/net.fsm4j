@@ -1,0 +1,170 @@
+$package com.fsm4j.tcp
+$class SimplifiedTcp
+$initial-state Initial
+$actions
+    receiveSYN receiveACK receiveFIN
+    sendSYN sendACK sendFIN
+
+${{
+    Initial {
+        start() => Closed {# System.out.println("(Note: Use the FSM diagram to track which state you and the device are in, and to see which messages you should exchange)"); #}
+    },
+
+    Closed {
+        __enter__ {#
+           System.out.println("> Closed [enter]: Connection closed");
+           System.out.println("--------------PAUSE TCP--------------");
+           System.out.println("*** Choose device's connection sequence type [initiator, responder]");
+           System.out.println("(Note: You will be the device with the other sequence type)");
+        #}
+        __exit__ {#
+           System.out.println("--------------CONTINUE TCP--------------");
+           System.out.println("*** Choose message type(s) to send comma separated [SYN, ACK, FIN]");
+        #}
+        readMsg(msg: String) [# "initiator".equals(msg) #] => SynSent {# ctx.sendSYN(); #},
+        readMsg(msg: String) [# "responder".equals(msg) #] => Listen {##},
+        readMsg(msg: String) => null {##}
+    },
+
+
+
+
+
+    SynSent {
+        __enter__ {#
+            System.out.println("> SynSent [enter]: Sent connection request");
+        #}
+        readMsg(msg: String) [# "SYN".equals(msg) #] => SynReceived {#
+            ctx.receiveSYN();
+            ctx.sendACK();
+        #},
+        readMsg(msg: String) [# "SYN,ACK".equals(msg) #] => Established {#
+            ctx.receiveSYN();
+            ctx.receiveACK();
+        #},
+        readMsg(msg: String) => null {##}
+    },
+
+
+
+
+
+    Listen {
+        __enter__ {#
+           System.out.println("> Listen [enter]: Listening for connection requests...");
+        #}
+        readMsg(msg: String) [# "SYN".equals(msg) #] => SynReceived {#
+            ctx.sendSYN();
+            ctx.sendACK();
+        #},
+        readMsg(msg: String) => null {##}
+    },
+
+    SynReceived {
+        __enter__ {#
+            System.out.println("> SynReceived [enter]: Received connection request");
+        #}
+        readMsg(msg:String) [# "ACK".equals(msg) #] => Established {# ctx.receiveACK(); #},
+        readMsg(msg: String) => null {##}
+    },
+
+
+
+
+
+    Established {
+        __enter__ {#
+            System.out.println("> Established [enter]: Connection established, data can be exchanged");
+            System.out.println("--------------PAUSE TCP--------------");
+            System.out.println("*** 1) Exchange data, the device will display the content, OR");
+            System.out.println("*** 2) Choose device's termination sequence type [initiator, responder]");
+            System.out.println("(Note: You will be the device with the other sequence type)");
+        #}
+        __exit__ {#
+            System.out.println("--------------CONTINUE TCP--------------");
+            System.out.println("*** Choose message type(s) to send comma separated [SYN, ACK, FIN]");
+        #}
+        readMsg(msg: String) => null {# System.out.println("\"\"\"\n" + msg + "\n\"\"\""); #},
+        readMsg(msg: String) [# "initiator".equals(msg) #] => FINWait1 {# ctx.sendFIN(); #},
+        readMsg(msg: String) [# "responder".equals(msg) #] => CloseWait {#
+            ctx.receiveFIN();
+            ctx.sendACK();
+        #}
+    },
+
+
+
+
+
+    CloseWait {
+        __enter__ {#
+           System.out.println("> CloseWait [enter]: Received termination request, closing application...");
+           try {
+               Thread.sleep(3000);
+           } catch (InterruptedException e) {
+               throw new RuntimeException(e);
+           }
+           timerExpired();
+        #}
+        timerExpired() => LastAck {# ctx.sendFIN(); #}
+    },
+
+    LastAck {
+        __enter__ {#
+           System.out.println("> LastAck [enter]: Waiting for last acknowledgement...");
+        #}
+        readMsg(msg: String) [# "ACK".equals(msg) #] => Closed {# ctx.receiveACK(); #},
+        readMsg(msg: String) => null {##}
+    },
+
+
+
+
+
+    FINWait1 {
+        __enter__ {#
+           System.out.println("> FINWait1 [enter]: Sent termination request");
+        #}
+        readMsg(msg: String) [# "FIN".equals(msg) #] => Closing {#
+            ctx.receiveFIN();
+            ctx.sendACK();
+        #},
+        readMsg(msg: String) [# "ACK".equals(msg) #] => FINWait2 {# ctx.receiveACK(); #},
+        readMsg(msg: String) => null {##}
+    },
+
+    FINWait2 {
+         __enter__ {#
+           System.out.println("> FINWait2 [enter]: Waiting for matching termination request...");
+        #}
+        readMsg(msg: String) [# "FIN".equals(msg) #] => TimeWait {#
+            ctx.receiveFIN();
+            ctx.sendACK();
+        #},
+        readMsg(msg: String) => null {##}
+    },
+
+    Closing {
+        __enter__ {#
+           System.out.println("> Closing [enter]: Waiting for matching termination request...");
+        #}
+        readMsg(msg: String) [# "ACK".equals(msg) #] => TimeWait {# ctx.receiveACK(); #},
+        readMsg(msg: String) => null {##}
+    },
+
+    TimeWait {
+        __enter__ {#
+            System.out.println("> TimeWait [enter]: Connection termination in 5 seconds...");
+           try {
+               Thread.sleep(5000);
+           } catch (InterruptedException e) {
+               throw new RuntimeException(e);
+           }
+           timerExpired();
+        #}
+        __exit__ {#
+            System.out.println("> TimeWait [exit]: Timer expired, terminating connection...");
+        #}
+        timerExpired() => Closed {##}
+    }
+}}$
